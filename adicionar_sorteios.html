@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Adicionar Sorteios</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      max-width: 400px;
+      margin: auto;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    table {
+      width: 100%;
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      border-collapse: collapse;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+    .fechado {
+      background-color: #f8d7da;
+    }
+  </style>
+</head>
+<body>
+  <h2>Adicionar Sorteios</h2>
+
+  <form onsubmit="adicionarSorteio(event)">
+    <input type="text" id="nomeSorteio" placeholder="Nome do sorteio" required />
+    <input type="time" id="horarioFechamento" required />
+    <button type="submit">Salvar Sorteio</button>
+  </form>
+
+  <h3 style="text-align:center">Sorteios do Dia</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Fechamento</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="listaSorteios">
+      <!-- Inserido por JS -->
+    </tbody>
+  </table>
+
+  <script>
+    const lista = document.getElementById("listaSorteios");
+
+    function getHoje() {
+      const hoje = new Date();
+      return hoje.toISOString().split('T')[0]; // yyyy-mm-dd
+    }
+
+    function carregarSorteios() {
+      const sorteios = JSON.parse(localStorage.getItem("sorteios") || "[]");
+      const hoje = getHoje();
+      const agora = new Date();
+      lista.innerHTML = "";
+
+      sorteios.filter(s => s.data === hoje).forEach(sorteio => {
+        const horaFechamento = new Date(`${sorteio.data}T${sorteio.fechamento}`);
+        const fechado = agora >= horaFechamento;
+        const tr = document.createElement("tr");
+        if (fechado) tr.classList.add("fechado");
+
+        tr.innerHTML = `
+          <td>${sorteio.nome}</td>
+          <td>${sorteio.fechamento}</td>
+          <td>${fechado ? "Fechado" : "Aberto"}</td>
+        `;
+        lista.appendChild(tr);
+      });
+    }
+
+    function adicionarSorteio(event) {
+      event.preventDefault();
+
+      const nome = document.getElementById("nomeSorteio").value.trim();
+      const fechamento = document.getElementById("horarioFechamento").value;
+      const hoje = getHoje();
+
+      const novoSorteio = {
+        nome,
+        fechamento,
+        data: hoje
+      };
+
+      let sorteios = JSON.parse(localStorage.getItem("sorteios") || "[]");
+
+      // Evita duplicar sorteio com mesmo nome e data
+      const existe = sorteios.find(s => s.nome === nome && s.data === hoje);
+      if (existe) {
+        alert("Esse sorteio já foi cadastrado hoje.");
+        return;
+      }
+
+      sorteios.push(novoSorteio);
+      localStorage.setItem("sorteios", JSON.stringify(sorteios));
+      document.querySelector("form").reset();
+      carregarSorteios();
+    }
+
+    // Simula geração automática todo dia
+    window.onload = function () {
+      const ultimaGeracao = localStorage.getItem("ultimaGeracao");
+      const hoje = getHoje();
+
+      if (ultimaGeracao !== hoje) {
+        // Exemplo: cria sorteio automático todo dia às 00:00
+        const sorteios = JSON.parse(localStorage.getItem("sorteios") || "[]");
+        sorteios.push({
+          nome: "Sorteio Automático",
+          fechamento: "21:00",
+          data: hoje
+        });
+        localStorage.setItem("sorteios", JSON.stringify(sorteios));
+        localStorage.setItem("ultimaGeracao", hoje);
+      }
+
+      carregarSorteios();
+    }
+  </script>
+</body>
+</html>
