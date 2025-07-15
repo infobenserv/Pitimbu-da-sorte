@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Adicionar Resultados</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 600px;
+      margin: auto;
+      margin-bottom: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    select, input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    .grupo-resultado {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    button {
+      background: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    button:hover {
+      background: #218838;
+    }
+    table {
+      width: 100%;
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      border-collapse: collapse;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Adicionar Resultados do Jogo do Bicho</h2>
+
+  <form onsubmit="salvarResultados(event)">
+    <label for="sorteio">Selecione o Sorteio do Dia:</label>
+    <select id="sorteio" required></select>
+
+    <div class="grupo-resultado">
+      <div><strong>Colocação</strong></div><div><strong>Milhar</strong></div>
+      <div>1º</div><input type="text" id="res1" required />
+      <div>2º</div><input type="text" id="res2" required />
+      <div>3º</div><input type="text" id="res3" required />
+      <div>4º</div><input type="text" id="res4" required />
+      <div>5º</div><input type="text" id="res5" required />
+      <div>6º</div><input type="text" id="res6" required />
+      <div>7º</div><input type="text" id="res7" required />
+      <div>8º</div><input type="text" id="res8" required />
+      <div>9º</div><input type="text" id="res9" required />
+      <div>10º</div><input type="text" id="res10" required />
+    </div>
+
+    <button type="submit">Salvar Resultado</button>
+  </form>
+
+  <h3 style="text-align:center;">Resultados Salvos</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Sorteio</th>
+        <th>Resultados</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaResultados">
+      <tr><td colspan="2">Carregando...</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    const selectSorteio = document.getElementById("sorteio");
+    const tabelaResultados = document.getElementById("tabelaResultados");
+
+    function getHoje() {
+      return new Date().toISOString().split("T")[0];
+    }
+
+    function carregarSorteios() {
+      const sorteios = JSON.parse(localStorage.getItem("sorteios") || "[]");
+      const hoje = getHoje();
+      const doDia = sorteios.filter(s => s.data === hoje);
+
+      selectSorteio.innerHTML = "";
+      doDia.forEach(s => {
+        const option = document.createElement("option");
+        option.value = s.nome + "|" + s.data;
+        option.textContent = `${s.nome} (${s.fechamento})`;
+        selectSorteio.appendChild(option);
+      });
+    }
+
+    function salvarResultados(event) {
+      event.preventDefault();
+      const sorteioSelecionado = selectSorteio.value;
+      if (!sorteioSelecionado) {
+        alert("Selecione um sorteio.");
+        return;
+      }
+
+      const resultados = [];
+      for (let i = 1; i <= 10; i++) {
+        const valor = document.getElementById(`res${i}`).value.trim();
+        if (valor === "") {
+          alert("Preencha todos os campos de resultado.");
+          return;
+        }
+        resultados.push(valor);
+      }
+
+      let salvos = JSON.parse(localStorage.getItem("resultados") || "[]");
+
+      // Remove resultado anterior se já existe para o mesmo sorteio
+      salvos = salvos.filter(r => r.sorteio !== sorteioSelecionado);
+
+      // Adiciona novo
+      salvos.push({
+        sorteio: sorteioSelecionado,
+        numeros: resultados
+      });
+
+      localStorage.setItem("resultados", JSON.stringify(salvos));
+      alert("Resultado salvo com sucesso!");
+      document.querySelector("form").reset();
+      exibirResultados();
+    }
+
+    function exibirResultados() {
+      const salvos = JSON.parse(localStorage.getItem("resultados") || "[]");
+      tabelaResultados.innerHTML = "";
+
+      if (salvos.length === 0) {
+        tabelaResultados.innerHTML = "<tr><td colspan='2'>Nenhum resultado registrado.</td></tr>";
+        return;
+      }
+
+      salvos.forEach(r => {
+        const [nome, data] = r.sorteio.split("|");
+        const lista = r.numeros.map((n, i) => `${i+1}º: ${n}`).join("<br>");
+        const linha = document.createElement("tr");
+
+        linha.innerHTML = `
+          <td><strong>${nome}</strong><br><small>${data}</small></td>
+          <td>${lista}</td>
+        `;
+
+        tabelaResultados.appendChild(linha);
+      });
+    }
+
+    window.onload = () => {
+      carregarSorteios();
+      exibirResultados();
+    };
+  </script>
+</body>
+</html>
