@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Prestação de Contas - Gerente</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f2f2f2;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    h2 { text-align: center; }
+
+    select, input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .resumo {
+      margin: 20px 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .card {
+      background: #f8f8f8;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .btn-zerar {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-zerar:hover {
+      background-color: #c82333;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>Prestação de Contas - Por Gerente</h2>
+
+  <select id="gerenteSelect">
+    <option value="">Selecione o Gerente</option>
+  </select>
+
+  <input type="date" id="dataFiltro" onchange="mostrarContas()" />
+
+  <div class="resumo">
+    <div class="card">Vendas Totais<br>R$ <span id="totalVendas">0.00</span></div>
+    <div class="card">Total Repassado<br>R$ <span id="totalRepassado">0.00</span></div>
+    <div class="card">Lucro Líquido<br>R$ <span id="lucroLiquido">0.00</span></div>
+    <div class="card">Saldo Atual<br>R$ <span id="saldoAtual">0.00</span></div>
+  </div>
+
+  <button class="btn-zerar" onclick="zerarCaixaGerente()">Zerar Caixa do Gerente</button>
+</div>
+
+<script>
+  function carregarGerentes() {
+    const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
+    const select = document.getElementById("gerenteSelect");
+    select.innerHTML = `<option value="">Selecione o Gerente</option>`;
+    usuarios.forEach(u => {
+      if (u.funcao === "gerente") {
+        const opt = document.createElement("option");
+        opt.value = u.nome;
+        opt.textContent = u.nome;
+        select.appendChild(opt);
+      }
+    });
+  }
+
+  function mostrarContas() {
+    const nome = document.getElementById("gerenteSelect").value;
+    const dataFiltro = document.getElementById("dataFiltro").value;
+    const bilhetes = JSON.parse(localStorage.getItem("bilhetes") || "[]");
+
+    let totalVendas = 0;
+
+    const bilhetesGerente = bilhetes.filter(b => b.gerente === nome);
+    const filtrados = dataFiltro
+      ? bilhetesGerente.filter(b => b.data === dataFiltro)
+      : bilhetesGerente;
+
+    filtrados.forEach(b => {
+      totalVendas += Number(b.valor || 0);
+    });
+
+    const totalRepassado = 0; // você pode somar os valores repassados se salvar futuramente
+    const lucroLiquido = totalVendas - totalRepassado;
+    const saldoAtual = lucroLiquido;
+
+    document.getElementById("totalVendas").textContent = totalVendas.toFixed(2);
+    document.getElementById("totalRepassado").textContent = totalRepassado.toFixed(2);
+    document.getElementById("lucroLiquido").textContent = lucroLiquido.toFixed(2);
+    document.getElementById("saldoAtual").textContent = saldoAtual.toFixed(2);
+  }
+
+  function zerarCaixaGerente() {
+    const nome = document.getElementById("gerenteSelect").value;
+    if (!nome) return alert("Selecione um gerente.");
+
+    if (!confirm("Deseja realmente zerar o caixa deste gerente?")) return;
+
+    let bilhetes = JSON.parse(localStorage.getItem("bilhetes") || "[]");
+    bilhetes = bilhetes.map(b => {
+      if (b.gerente === nome) b.valor = 0;
+      return b;
+    });
+
+    localStorage.setItem("bilhetes", JSON.stringify(bilhetes));
+    mostrarContas();
+    alert("Caixa zerado com sucesso.");
+  }
+
+  window.onload = () => {
+    carregarGerentes();
+    document.getElementById("gerenteSelect").onchange = mostrarContas;
+  };
+</script>
+
+</body>
+</html>
