@@ -3,164 +3,113 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Adicionar Sorteios</title>
+  <title>Criar Sorteio</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f9f9f9;
+      background: #f0f0f0;
       padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     h2 {
       text-align: center;
-      color: #333;
+      margin-bottom: 20px;
     }
-    form {
-      background: white;
-      padding: 20px;
-      max-width: 400px;
-      margin: auto;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-    }
-    input, button {
+    input, select, button {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       margin-top: 10px;
       border-radius: 8px;
       border: 1px solid #ccc;
+      font-size: 16px;
     }
     button {
-      background: #007bff;
+      background-color: #007bff;
       color: white;
-      border: none;
+      font-weight: bold;
       cursor: pointer;
     }
     button:hover {
-      background: #0056b3;
-    }
-    table {
-      width: 100%;
-      max-width: 600px;
-      margin: auto;
-      background: white;
-      border-collapse: collapse;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-    }
-    th {
-      background: #007bff;
-      color: white;
-    }
-    .fechado {
-      background-color: #f8d7da;
+      background-color: #0056b3;
     }
   </style>
 </head>
 <body>
-  <h2>Adicionar Sorteios</h2>
 
-  <form onsubmit="adicionarSorteio(event)">
-    <input type="text" id="nomeSorteio" placeholder="Nome do sorteio" required />
-    <input type="time" id="horarioFechamento" required />
-    <button type="submit">Salvar Sorteio</button>
-  </form>
+<div class="container">
+  <h2>Criar Sorteio de Rifa</h2>
 
-  <h3 style="text-align:center">Sorteios do Dia</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>Fechamento</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="listaSorteios">
-      <!-- Inserido por JS -->
-    </tbody>
-  </table>
+  <input type="text" id="nomeSorteio" placeholder="Nome do Sorteio" />
+  <input type="date" id="dataSorteio" />
+  <input type="text" id="premio" placeholder="Prêmio (opcional)" />
 
-  <script>
-    const lista = document.getElementById("listaSorteios");
+  <select id="selectRifa">
+    <option value="">Selecione a Rifa</option>
+  </select>
 
-    function getHoje() {
-      const hoje = new Date();
-      return hoje.toISOString().split('T')[0]; // yyyy-mm-dd
-    }
+  <button onclick="salvarSorteio()">Salvar Sorteio</button>
+</div>
 
-    function carregarSorteios() {
-      const sorteios = JSON.parse(localStorage.getItem("sorteios") || "[]");
-      const hoje = getHoje();
-      const agora = new Date();
-      lista.innerHTML = "";
+<script>
+  function carregarRifasSalvas() {
+    const select = document.getElementById("selectRifa");
+    select.innerHTML = `<option value="">Selecione a Rifa</option>`;
 
-      sorteios.filter(s => s.data === hoje).forEach(sorteio => {
-        const horaFechamento = new Date(`${sorteio.data}T${sorteio.fechamento}`);
-        const fechado = agora >= horaFechamento;
-        const tr = document.createElement("tr");
-        if (fechado) tr.classList.add("fechado");
-
-        tr.innerHTML = `
-          <td>${sorteio.nome}</td>
-          <td>${sorteio.fechamento}</td>
-          <td>${fechado ? "Fechado" : "Aberto"}</td>
-        `;
-        lista.appendChild(tr);
-      });
-    }
-
-    function adicionarSorteio(event) {
-      event.preventDefault();
-
-      const nome = document.getElementById("nomeSorteio").value.trim();
-      const fechamento = document.getElementById("horarioFechamento").value;
-      const hoje = getHoje();
-
-      const novoSorteio = {
-        nome,
-        fechamento,
-        data: hoje
-      };
-
-      let sorteios = JSON.parse(localStorage.getItem("sorteios") || "[]");
-
-      // Evita duplicar sorteio com mesmo nome e data
-      const existe = sorteios.find(s => s.nome === nome && s.data === hoje);
-      if (existe) {
-        alert("Esse sorteio já foi cadastrado hoje.");
-        return;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith("rifa_")) {
+        const nomeRifa = key.replace("rifa_", "");
+        const opt = document.createElement("option");
+        opt.value = nomeRifa;
+        opt.textContent = nomeRifa;
+        select.appendChild(opt);
       }
+    }
+  }
 
-      sorteios.push(novoSorteio);
-      localStorage.setItem("sorteios", JSON.stringify(sorteios));
-      document.querySelector("form").reset();
-      carregarSorteios();
+  function salvarSorteio() {
+    const nome = document.getElementById("nomeSorteio").value.trim();
+    const data = document.getElementById("dataSorteio").value;
+    const premio = document.getElementById("premio").value.trim();
+    const rifa = document.getElementById("selectRifa").value;
+
+    if (!nome || !data || !rifa) {
+      alert("Preencha nome, data e selecione a rifa.");
+      return;
     }
 
-    // Simula geração automática todo dia
-    window.onload = function () {
-      const ultimaGeracao = localStorage.getItem("ultimaGeracao");
-      const hoje = getHoje();
+    const novoSorteio = {
+      nome,
+      data,
+      premio,
+      rifa,
+      criadoEm: new Date().toLocaleString()
+    };
 
-      if (ultimaGeracao !== hoje) {
-        // Exemplo: cria sorteio automático todo dia às 00:00
-        const sorteios = JSON.parse(localStorage.getItem("sorteios") || "[]");
-        sorteios.push({
-          nome: "Sorteio Automático",
-          fechamento: "21:00",
-          data: hoje
-        });
-        localStorage.setItem("sorteios", JSON.stringify(sorteios));
-        localStorage.setItem("ultimaGeracao", hoje);
-      }
+    const sorteios = JSON.parse(localStorage.getItem("sorteios") || "[]");
+    sorteios.push(novoSorteio);
+    localStorage.setItem("sorteios", JSON.stringify(sorteios));
 
-      carregarSorteios();
-    }
-  </script>
+    alert("Sorteio salvo com sucesso!");
+
+    // Limpar
+    document.getElementById("nomeSorteio").value = "";
+    document.getElementById("dataSorteio").value = "";
+    document.getElementById("premio").value = "";
+    document.getElementById("selectRifa").value = "";
+  }
+
+  window.onload = () => {
+    carregarRifasSalvas();
+  };
+</script>
+
 </body>
 </html>
