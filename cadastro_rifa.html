@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cadastro de Rifa</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      background-color: #28a745;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Cadastro de Rifa</h2>
+
+  <input type="text" id="nomeRifa" placeholder="Nome da Rifa" />
+  <input type="number" id="quantidade" placeholder="Quantidade de Bilhetes" min="1" />
+  <input type="number" id="valor" placeholder="Valor por Bilhete (R$)" step="0.01" />
+
+  <button onclick="gerarBilhetes()">Gerar Bilhetes</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Número 1</th>
+        <th>Número 2</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaBilhetes">
+      <tr><td colspan="4">Nenhum bilhete gerado.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  function gerarNumero4Digitos() {
+    return Math.floor(1000 + Math.random() * 9000); // 1000 a 9999
+  }
+
+  function gerarBilhetes() {
+    const nome = document.getElementById("nomeRifa").value.trim();
+    const quantidade = parseInt(document.getElementById("quantidade").value);
+    const valor = parseFloat(document.getElementById("valor").value).toFixed(2);
+    const tabela = document.getElementById("tabelaBilhetes");
+
+    if (!nome || isNaN(quantidade) || quantidade <= 0 || isNaN(valor)) {
+      alert("Preencha todos os campos corretamente.");
+      return;
+    }
+
+    const bilhetes = [];
+
+    for (let i = 1; i <= quantidade; i++) {
+      bilhetes.push({
+        id: i,
+        numero1: gerarNumero4Digitos(),
+        numero2: gerarNumero4Digitos(),
+        status: "Disponível",
+        comprador: "",
+        valor: valor
+      });
+    }
+
+    localStorage.setItem("rifa_" + nome, JSON.stringify(bilhetes));
+
+    tabela.innerHTML = "";
+    bilhetes.forEach(b => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${b.id}</td>
+        <td>${b.numero1}</td>
+        <td>${b.numero2}</td>
+        <td>${b.status}</td>
+      `;
+      tabela.appendChild(tr);
+    });
+
+    alert(`Rifa "${nome}" salva com ${quantidade} bilhetes.`);
+  }
+</script>
+
+</body>
+</html>
