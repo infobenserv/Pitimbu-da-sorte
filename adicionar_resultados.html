@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Adicionar Resultados dos Sorteios</title>
+  <title>Resultados - Jogo do Bicho</title>
   <style>
     body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
     .container {
@@ -15,13 +15,13 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     h2 { text-align: center; }
-    input, button {
+    select, input, button {
       width: 100%;
-      padding: 12px;
+      padding: 10px;
       margin-top: 10px;
       font-size: 16px;
-      border-radius: 8px;
       border: 1px solid #ccc;
+      border-radius: 8px;
     }
     button {
       background-color: #007bff;
@@ -61,27 +61,73 @@
 <body>
 
   <div class="container">
-    <h2>Adicionar Resultados dos Sorteios</h2>
+    <h2>Resultados - Jogo do Bicho</h2>
 
     <input type="date" id="dataResultado" />
-    <input type="text" id="resultadoTexto" placeholder="Digite o resultado (ex: 1º - 1234, 2º - 4321...)" />
-    <button onclick="adicionarResultado()">Salvar Resultado</button>
+
+    <select id="sorteioSelect">
+      <option value="">Selecione o Sorteio</option>
+      <option value="PT">PT</option>
+      <option value="PTM">PTM</option>
+      <option value="PTN">PTN</option>
+      <option value="COR">COR</option>
+    </select>
+
+    <input type="text" id="p1" placeholder="1º Prêmio (ex: 1234)">
+    <input type="text" id="p2" placeholder="2º Prêmio">
+    <input type="text" id="p3" placeholder="3º Prêmio">
+    <input type="text" id="p4" placeholder="4º Prêmio">
+    <input type="text" id="p5" placeholder="5º Prêmio">
+
+    <button onclick="salvarResultado()">Salvar Resultado</button>
 
     <table>
       <thead>
         <tr>
           <th>Data</th>
-          <th>Resultado</th>
+          <th>Sorteio</th>
+          <th>Prêmios (1º ao 5º)</th>
           <th>Ação</th>
         </tr>
       </thead>
       <tbody id="tabelaResultados">
-        <tr><td colspan="3">Nenhum resultado adicionado.</td></tr>
+        <tr><td colspan="4">Nenhum resultado adicionado.</td></tr>
       </tbody>
     </table>
   </div>
 
   <script>
+    function salvarResultado() {
+      const data = document.getElementById("dataResultado").value;
+      const sorteio = document.getElementById("sorteioSelect").value;
+      const premios = [
+        document.getElementById("p1").value.trim(),
+        document.getElementById("p2").value.trim(),
+        document.getElementById("p3").value.trim(),
+        document.getElementById("p4").value.trim(),
+        document.getElementById("p5").value.trim()
+      ];
+
+      if (!data || !sorteio || premios.some(p => !p)) {
+        alert("Preencha todos os campos.");
+        return;
+      }
+
+      const resultados = JSON.parse(localStorage.getItem("resultados") || "[]");
+
+      // Verifica se já existe esse sorteio nesta data
+      const existe = resultados.some(r => r.data === data && r.sorteio === sorteio);
+      if (existe) {
+        alert("Já existe resultado para essa data e sorteio.");
+        return;
+      }
+
+      resultados.push({ data, sorteio, premios });
+      localStorage.setItem("resultados", JSON.stringify(resultados));
+      limparCampos();
+      carregarResultados();
+    }
+
     function carregarResultados() {
       const tabela = document.getElementById("tabelaResultados");
       const resultados = JSON.parse(localStorage.getItem("resultados") || "[]");
@@ -89,58 +135,38 @@
       tabela.innerHTML = "";
 
       if (resultados.length === 0) {
-        tabela.innerHTML = "<tr><td colspan='3'>Nenhum resultado adicionado.</td></tr>";
+        tabela.innerHTML = "<tr><td colspan='4'>Nenhum resultado adicionado.</td></tr>";
         return;
       }
 
-      resultados.forEach((r, index) => {
+      resultados.forEach((r, i) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${r.data}</td>
-          <td>${r.resultado}</td>
-          <td><button class="btn-delete" onclick="excluirResultado(${index})">Excluir</button></td>
+          <td>${r.sorteio}</td>
+          <td>${r.premios.join(" | ")}</td>
+          <td><button class="btn-delete" onclick="excluirResultado(${i})">Excluir</button></td>
         `;
         tabela.appendChild(tr);
       });
     }
 
-    function adicionarResultado() {
-      const data = document.getElementById("dataResultado").value;
-      const resultado = document.getElementById("resultadoTexto").value.trim();
-
-      if (!data || !resultado) {
-        alert("Preencha a data e o resultado.");
-        return;
-      }
-
-      const resultados = JSON.parse(localStorage.getItem("resultados") || "[]");
-
-      const jaExiste = resultados.some(r => r.data === data);
-      if (jaExiste) {
-        alert("Já existe um resultado cadastrado para essa data.");
-        return;
-      }
-
-      resultados.push({ data, resultado });
-      localStorage.setItem("resultados", JSON.stringify(resultados));
-
-      document.getElementById("dataResultado").value = "";
-      document.getElementById("resultadoTexto").value = "";
-
-      carregarResultados();
-    }
-
     function excluirResultado(index) {
       if (!confirm("Deseja realmente excluir este resultado?")) return;
-
       const resultados = JSON.parse(localStorage.getItem("resultados") || "[]");
       resultados.splice(index, 1);
       localStorage.setItem("resultados", JSON.stringify(resultados));
       carregarResultados();
     }
 
+    function limparCampos() {
+      document.getElementById("dataResultado").value = "";
+      document.getElementById("sorteioSelect").value = "";
+      for (let i = 1; i <= 5; i++) document.getElementById("p" + i).value = "";
+    }
+
     window.onload = carregarResultados;
   </script>
 
 </body>
-</html>
+  </html>
