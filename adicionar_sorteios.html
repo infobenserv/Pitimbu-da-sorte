@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Criar Sorteio</title>
+  <title>Registrar Resultado</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,104 +11,99 @@
       padding: 20px;
     }
     .container {
-      max-width: 500px;
+      max-width: 600px;
       margin: auto;
       background: #fff;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
     }
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    input, select, button {
+    h2 { text-align: center; }
+    select, button {
       width: 100%;
-      padding: 12px;
-      margin-top: 10px;
+      padding: 10px;
+      margin: 12px 0;
       border-radius: 8px;
-      border: 1px solid #ccc;
       font-size: 16px;
+      border: 1px solid #ccc;
     }
     button {
-      background-color: #007bff;
+      background: #28a745;
       color: white;
       font-weight: bold;
       cursor: pointer;
     }
     button:hover {
-      background-color: #0056b3;
+      background: #218838;
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>Criar Sorteio de Rifa</h2>
+  <h2>Registrar Resultado do Sorteio</h2>
 
-  <input type="text" id="nomeSorteio" placeholder="Nome do Sorteio" />
-  <input type="date" id="dataSorteio" />
-  <input type="text" id="premio" placeholder="Prêmio (opcional)" />
-
-  <select id="selectRifa">
-    <option value="">Selecione a Rifa</option>
+  <select id="selectSorteio" onchange="carregarBilhetes()">
+    <option value="">Selecione o Sorteio</option>
   </select>
 
-  <button onclick="salvarSorteio()">Salvar Sorteio</button>
+  <select id="selectBilhete">
+    <option value="">Selecione o Bilhete Vencedor</option>
+  </select>
+
+  <button onclick="registrarResultado()">Salvar Resultado</button>
 </div>
 
 <script>
-  function carregarRifasSalvas() {
-    const select = document.getElementById("selectRifa");
-    select.innerHTML = `<option value="">Selecione a Rifa</option>`;
+  function carregarSorteios() {
+    const sorteios = JSON.parse(localStorage.getItem("sorteios") || "[]");
+    const select = document.getElementById("selectSorteio");
+    select.innerHTML = `<option value="">Selecione o Sorteio</option>`;
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key.startsWith("rifa_")) {
-        const nomeRifa = key.replace("rifa_", "");
-        const opt = document.createElement("option");
-        opt.value = nomeRifa;
-        opt.textContent = nomeRifa;
-        select.appendChild(opt);
-      }
-    }
+    sorteios.forEach((s, index) => {
+      const opt = document.createElement("option");
+      opt.value = index;
+      opt.textContent = `${s.nome} - (${s.data})`;
+      select.appendChild(opt);
+    });
   }
 
-  function salvarSorteio() {
-    const nome = document.getElementById("nomeSorteio").value.trim();
-    const data = document.getElementById("dataSorteio").value;
-    const premio = document.getElementById("premio").value.trim();
-    const rifa = document.getElementById("selectRifa").value;
+  function carregarBilhetes() {
+    const sorteios = JSON.parse(localStorage.getItem("sorteios") || "[]");
+    const index = document.getElementById("selectSorteio").value;
+    const selectBilhete = document.getElementById("selectBilhete");
+    selectBilhete.innerHTML = `<option value="">Selecione o Bilhete Vencedor</option>`;
 
-    if (!nome || !data || !rifa) {
-      alert("Preencha nome, data e selecione a rifa.");
+    if (index === "") return;
+
+    const sorteio = sorteios[index];
+    const bilhetes = JSON.parse(localStorage.getItem("rifa_" + sorteio.rifa) || "[]");
+
+    bilhetes.forEach(b => {
+      const opt = document.createElement("option");
+      opt.value = `${b.numero1}-${b.numero2}`;
+      opt.textContent = `#${b.id} - ${b.numero1} / ${b.numero2} ${b.comprador ? "(Comprado por: " + b.comprador + ")" : ""}`;
+      selectBilhete.appendChild(opt);
+    });
+  }
+
+  function registrarResultado() {
+    const sorteios = JSON.parse(localStorage.getItem("sorteios") || "[]");
+    const index = document.getElementById("selectSorteio").value;
+    const bilheteVencedor = document.getElementById("selectBilhete").value;
+
+    if (index === "" || bilheteVencedor === "") {
+      alert("Selecione o sorteio e o bilhete vencedor.");
       return;
     }
 
-    const novoSorteio = {
-      nome,
-      data,
-      premio,
-      rifa,
-      criadoEm: new Date().toLocaleString()
-    };
-
-    const sorteios = JSON.parse(localStorage.getItem("sorteios") || "[]");
-    sorteios.push(novoSorteio);
+    sorteios[index].resultado = bilheteVencedor;
     localStorage.setItem("sorteios", JSON.stringify(sorteios));
 
-    alert("Sorteio salvo com sucesso!");
-
-    // Limpar
-    document.getElementById("nomeSorteio").value = "";
-    document.getElementById("dataSorteio").value = "";
-    document.getElementById("premio").value = "";
-    document.getElementById("selectRifa").value = "";
+    alert("Resultado salvo com sucesso!");
   }
 
-  window.onload = () => {
-    carregarRifasSalvas();
-  };
+  window.onload = carregarSorteios;
 </script>
 
 </body>
