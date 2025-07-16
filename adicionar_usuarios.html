@@ -1,155 +1,139 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gerenciar Usuários</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Adicionar Usuário</title>
   <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      padding: 20px;
+    }
     .container {
-      max-width: 600px;
+      max-width: 500px;
       margin: auto;
-      background-color: #fff;
+      background-color: white;
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    h2 { text-align: center; margin-bottom: 20px; }
-    input, select, button {
+    h2 {
+      text-align: center;
+    }
+    select, input, button {
       width: 100%;
-      padding: 12px;
-      margin: 10px 0;
+      padding: 10px;
+      margin-top: 10px;
       border: 1px solid #ccc;
       border-radius: 8px;
       font-size: 16px;
     }
     button {
-      background-color: #007bff;
+      background-color: #28a745;
       color: white;
       font-weight: bold;
       cursor: pointer;
     }
-    button:hover { background-color: #0056b3; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
+    button:hover {
+      background-color: #218838;
     }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
+    #grupoGerente {
+      display: none;
     }
-    th { background-color: #007bff; color: white; }
-    .btn-edit, .btn-delete {
-      padding: 5px 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .btn-edit { background: #ffc107; color: #000; }
-    .btn-delete { background: #dc3545; color: #fff; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h2>Gerenciar Usuários</h2>
+<div class="container">
+  <h2>Adicionar Usuário</h2>
 
-    <input type="text" id="nomeUsuario" placeholder="Nome do Usuário" />
-    <select id="tipoUsuario">
-      <option value="">Selecione o Tipo</option>
-      <option value="Gerente">Gerente</option>
-      <option value="Vendedor">Vendedor</option>
+  <input type="text" id="nome" placeholder="Nome do Usuário" />
+  <input type="password" id="senha" placeholder="Senha" />
+
+  <select id="funcao" onchange="atualizarCampoGerente()">
+    <option value="">Selecione a Função</option>
+    <option value="gerente">Gerente</option>
+    <option value="vendedor">Vendedor</option>
+  </select>
+
+  <div id="grupoGerente">
+    <label for="gerenteSelect">Selecione o Gerente Responsável:</label>
+    <select id="gerenteSelect">
+      <option value="">Escolha o gerente</option>
     </select>
-
-    <button onclick="salvarUsuario()">Salvar Usuário</button>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Tipo</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaUsuarios">
-        <tr><td colspan="3">Nenhum usuário cadastrado.</td></tr>
-      </tbody>
-    </table>
   </div>
 
-  <script>
-    let indiceEdicao = null;
+  <button onclick="adicionarUsuario()">Salvar Usuário</button>
+</div>
 
-    function carregarUsuarios() {
-      const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
-      const tabela = document.getElementById("tabelaUsuarios");
-      tabela.innerHTML = "";
+<script>
+  function atualizarCampoGerente() {
+    const funcao = document.getElementById("funcao").value;
+    const grupoGerente = document.getElementById("grupoGerente");
+    grupoGerente.style.display = funcao === "vendedor" ? "block" : "none";
+  }
 
-      if (usuarios.length === 0) {
-        tabela.innerHTML = "<tr><td colspan='3'>Nenhum usuário cadastrado.</td></tr>";
-        return;
+  function carregarGerentes() {
+    const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
+    const select = document.getElementById("gerenteSelect");
+    select.innerHTML = '<option value="">Escolha o gerente</option>';
+
+    usuarios.forEach(u => {
+      if (u.funcao === "gerente") {
+        const opt = document.createElement("option");
+        opt.value = u.nome;
+        opt.textContent = u.nome;
+        select.appendChild(opt);
       }
+    });
+  }
 
-      usuarios.forEach((usuario, index) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${usuario.nome}</td>
-          <td>${usuario.tipo}</td>
-          <td>
-            <button class="btn-edit" onclick="editarUsuario(${index})">Editar</button>
-            <button class="btn-delete" onclick="excluirUsuario(${index})">Excluir</button>
-          </td>
-        `;
-        tabela.appendChild(tr);
-      });
+  function adicionarUsuario() {
+    const nome = document.getElementById("nome").value.trim();
+    const senha = document.getElementById("senha").value.trim();
+    const funcao = document.getElementById("funcao").value;
+    const gerente = document.getElementById("gerenteSelect").value;
+
+    if (!nome || !senha || !funcao) {
+      alert("Preencha todos os campos.");
+      return;
     }
 
-    function salvarUsuario() {
-      const nome = document.getElementById("nomeUsuario").value.trim();
-      const tipo = document.getElementById("tipoUsuario").value;
-
-      if (!nome || !tipo) {
-        alert("Preencha todos os campos.");
-        return;
-      }
-
-      const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
-
-      if (indiceEdicao !== null) {
-        usuarios[indiceEdicao] = { nome, tipo };
-        indiceEdicao = null;
-      } else {
-        usuarios.push({ nome, tipo });
-      }
-
-      localStorage.setItem("usuarios", JSON.stringify(usuarios));
-      document.getElementById("nomeUsuario").value = "";
-      document.getElementById("tipoUsuario").value = "";
-      carregarUsuarios();
+    if (funcao === "vendedor" && !gerente) {
+      alert("Selecione o gerente responsável.");
+      return;
     }
 
-    function editarUsuario(index) {
-      const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
-      const usuario = usuarios[index];
+    const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
+    const jaExiste = usuarios.some(u => u.nome === nome);
 
-      document.getElementById("nomeUsuario").value = usuario.nome;
-      document.getElementById("tipoUsuario").value = usuario.tipo;
-      indiceEdicao = index;
+    if (jaExiste) {
+      alert("Este nome de usuário já existe.");
+      return;
     }
 
-    function excluirUsuario(index) {
-      if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
-
-      const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
-      usuarios.splice(index, 1);
-      localStorage.setItem("usuarios", JSON.stringify(usuarios));
-      carregarUsuarios();
+    const novoUsuario = { nome, senha, funcao };
+    if (funcao === "vendedor") {
+      novoUsuario.gerente = gerente;
     }
 
-    window.onload = carregarUsuarios;
-  </script>
+    usuarios.push(novoUsuario);
+    localStorage.setItem("usuarios", JSON.stringify(usuarios));
+    alert("Usuário salvo com sucesso!");
+
+    // Limpar
+    document.getElementById("nome").value = "";
+    document.getElementById("senha").value = "";
+    document.getElementById("funcao").value = "";
+    document.getElementById("gerenteSelect").value = "";
+    atualizarCampoGerente();
+  }
+
+  window.onload = () => {
+    carregarGerentes();
+  };
+</script>
 
 </body>
 </html>
