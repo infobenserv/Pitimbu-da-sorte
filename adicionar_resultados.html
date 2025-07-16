@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Resultados - Jogo do Bicho</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
     .container {
-      max-width: 700px;
+      max-width: 800px;
       margin: auto;
       background-color: #fff;
       padding: 20px;
@@ -15,6 +15,7 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     h2 { text-align: center; }
+
     select, input, button {
       width: 100%;
       padding: 10px;
@@ -23,150 +24,230 @@
       border: 1px solid #ccc;
       border-radius: 8px;
     }
+
     button {
       background-color: #007bff;
       color: white;
       font-weight: bold;
       cursor: pointer;
     }
+
     button:hover { background-color: #0056b3; }
+
+    .actions button {
+      margin: 2px;
+      padding: 6px 10px;
+      font-size: 14px;
+    }
+
+    .btn-delete {
+      background-color: #dc3545;
+    }
+
+    .btn-edit {
+      background-color: #ffc107;
+      color: #000;
+    }
 
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
+
     th, td {
       padding: 10px;
       border: 1px solid #ccc;
       text-align: center;
     }
+
     th {
       background-color: #007bff;
       color: white;
     }
-    .btn-delete {
-      background-color: #dc3545;
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 6px;
-      cursor: pointer;
+
+    .filtros {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
     }
-    .btn-delete:hover {
-      background-color: #c82333;
+
+    .filtros input, .filtros select {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h2>Resultados - Jogo do Bicho</h2>
+<div class="container">
+  <h2>Resultados - Jogo do Bicho</h2>
 
-    <input type="date" id="dataResultado" />
+  <input type="date" id="dataResultado" />
+  <select id="sorteioSelect"><option value="">Selecione o Sorteio</option></select>
+  <input type="text" id="p1" placeholder="1º Prêmio">
+  <input type="text" id="p2" placeholder="2º Prêmio">
+  <input type="text" id="p3" placeholder="3º Prêmio">
+  <input type="text" id="p4" placeholder="4º Prêmio">
+  <input type="text" id="p5" placeholder="5º Prêmio">
+  <button onclick="salvarResultado()">Salvar Resultado</button>
 
-    <select id="sorteioSelect">
-      <option value="">Selecione o Sorteio</option>
-      <option value="PT">PT</option>
-      <option value="PTM">PTM</option>
-      <option value="PTN">PTN</option>
-      <option value="COR">COR</option>
+  <div class="filtros">
+    <input type="date" id="filtroData" onchange="carregarResultados()">
+    <select id="filtroSorteio" onchange="carregarResultados()">
+      <option value="">Filtrar por Sorteio</option>
     </select>
-
-    <input type="text" id="p1" placeholder="1º Prêmio (ex: 1234)">
-    <input type="text" id="p2" placeholder="2º Prêmio">
-    <input type="text" id="p3" placeholder="3º Prêmio">
-    <input type="text" id="p4" placeholder="4º Prêmio">
-    <input type="text" id="p5" placeholder="5º Prêmio">
-
-    <button onclick="salvarResultado()">Salvar Resultado</button>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Sorteio</th>
-          <th>Prêmios (1º ao 5º)</th>
-          <th>Ação</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaResultados">
-        <tr><td colspan="4">Nenhum resultado adicionado.</td></tr>
-      </tbody>
-    </table>
   </div>
 
-  <script>
-    function salvarResultado() {
-      const data = document.getElementById("dataResultado").value;
-      const sorteio = document.getElementById("sorteioSelect").value;
-      const premios = [
-        document.getElementById("p1").value.trim(),
-        document.getElementById("p2").value.trim(),
-        document.getElementById("p3").value.trim(),
-        document.getElementById("p4").value.trim(),
-        document.getElementById("p5").value.trim()
-      ];
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Sorteio</th>
+        <th>Prêmios</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaResultados">
+      <tr><td colspan="4">Nenhum resultado encontrado.</td></tr>
+    </tbody>
+  </table>
+</div>
 
-      if (!data || !sorteio || premios.some(p => !p)) {
-        alert("Preencha todos os campos.");
-        return;
-      }
+<script>
+  let indiceEdicao = null;
 
-      const resultados = JSON.parse(localStorage.getItem("resultados") || "[]");
+  function carregarSorteios() {
+    const sorteios = JSON.parse(localStorage.getItem("sorteios") || "[]");
+    const select = document.getElementById("sorteioSelect");
+    const filtro = document.getElementById("filtroSorteio");
 
-      // Verifica se já existe esse sorteio nesta data
+    select.innerHTML = '<option value="">Selecione o Sorteio</option>';
+    filtro.innerHTML = '<option value="">Filtrar por Sorteio</option>';
+
+    sorteios.forEach(s => {
+      const opt1 = document.createElement("option");
+      opt1.value = s.nome;
+      opt1.textContent = `${s.nome} - ${s.horario}`;
+      select.appendChild(opt1);
+
+      const opt2 = document.createElement("option");
+      opt2.value = s.nome;
+      opt2.textContent = s.nome;
+      filtro.appendChild(opt2);
+    });
+  }
+
+  function salvarResultado() {
+    const data = document.getElementById("dataResultado").value;
+    const sorteio = document.getElementById("sorteioSelect").value;
+    const premios = [
+      document.getElementById("p1").value.trim(),
+      document.getElementById("p2").value.trim(),
+      document.getElementById("p3").value.trim(),
+      document.getElementById("p4").value.trim(),
+      document.getElementById("p5").value.trim()
+    ];
+
+    if (!data || !sorteio || premios.some(p => !p)) {
+      alert("Preencha todos os campos.");
+      return;
+    }
+
+    let resultados = JSON.parse(localStorage.getItem("resultados") || "[]");
+
+    if (indiceEdicao !== null) {
+      resultados[indiceEdicao] = { data, sorteio, premios };
+      indiceEdicao = null;
+    } else {
       const existe = resultados.some(r => r.data === data && r.sorteio === sorteio);
       if (existe) {
         alert("Já existe resultado para essa data e sorteio.");
         return;
       }
-
       resultados.push({ data, sorteio, premios });
-      localStorage.setItem("resultados", JSON.stringify(resultados));
-      limparCampos();
-      carregarResultados();
     }
 
-    function carregarResultados() {
-      const tabela = document.getElementById("tabelaResultados");
-      const resultados = JSON.parse(localStorage.getItem("resultados") || "[]");
+    localStorage.setItem("resultados", JSON.stringify(resultados));
+    limparCampos();
+    carregarResultados();
+  }
 
-      tabela.innerHTML = "";
+  function carregarResultados() {
+    const resultados = JSON.parse(localStorage.getItem("resultados") || "[]");
+    const filtroData = document.getElementById("filtroData").value;
+    const filtroSorteio = document.getElementById("filtroSorteio").value;
+    const tabela = document.getElementById("tabelaResultados");
+    tabela.innerHTML = "";
 
-      if (resultados.length === 0) {
-        tabela.innerHTML = "<tr><td colspan='4'>Nenhum resultado adicionado.</td></tr>";
-        return;
-      }
+    let filtrados = resultados;
 
-      resultados.forEach((r, i) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${r.data}</td>
-          <td>${r.sorteio}</td>
-          <td>${r.premios.join(" | ")}</td>
-          <td><button class="btn-delete" onclick="excluirResultado(${i})">Excluir</button></td>
-        `;
-        tabela.appendChild(tr);
-      });
+    if (filtroData) {
+      filtrados = filtrados.filter(r => r.data === filtroData);
     }
 
-    function excluirResultado(index) {
-      if (!confirm("Deseja realmente excluir este resultado?")) return;
-      const resultados = JSON.parse(localStorage.getItem("resultados") || "[]");
-      resultados.splice(index, 1);
-      localStorage.setItem("resultados", JSON.stringify(resultados));
-      carregarResultados();
+    if (filtroSorteio) {
+      filtrados = filtrados.filter(r => r.sorteio === filtroSorteio);
     }
 
-    function limparCampos() {
-      document.getElementById("dataResultado").value = "";
-      document.getElementById("sorteioSelect").value = "";
-      for (let i = 1; i <= 5; i++) document.getElementById("p" + i).value = "";
+    filtrados.sort((a, b) => b.data.localeCompare(a.data));
+
+    if (filtrados.length === 0) {
+      tabela.innerHTML = "<tr><td colspan='4'>Nenhum resultado encontrado.</td></tr>";
+      return;
     }
 
-    window.onload = carregarResultados;
-  </script>
+    filtrados.forEach((r, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.data}</td>
+        <td>${r.sorteio}</td>
+        <td>${r.premios.join(" | ")}</td>
+        <td class="actions">
+          <button class="btn-edit" onclick="editarResultado(${i})">Editar</button>
+          <button class="btn-delete" onclick="excluirResultado(${i})">Excluir</button>
+        </td>
+      `;
+      tabela.appendChild(tr);
+    });
+  }
+
+  function editarResultado(index) {
+    const resultados = JSON.parse(localStorage.getItem("resultados") || "[]");
+    const r = resultados[index];
+    document.getElementById("dataResultado").value = r.data;
+    document.getElementById("sorteioSelect").value = r.sorteio;
+    for (let i = 0; i < 5; i++) {
+      document.getElementById(`p${i + 1}`).value = r.premios[i];
+    }
+    indiceEdicao = index;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function excluirResultado(index) {
+    if (!confirm("Deseja realmente excluir este resultado?")) return;
+    let resultados = JSON.parse(localStorage.getItem("resultados") || "[]");
+    resultados.splice(index, 1);
+    localStorage.setItem("resultados", JSON.stringify(resultados));
+    carregarResultados();
+  }
+
+  function limparCampos() {
+    document.getElementById("dataResultado").value = "";
+    document.getElementById("sorteioSelect").value = "";
+    for (let i = 1; i <= 5; i++) document.getElementById("p" + i).value = "";
+  }
+
+  window.onload = () => {
+    carregarSorteios();
+    carregarResultados();
+  };
+</script>
 
 </body>
-  </html>
+</html>
