@@ -1,1 +1,135 @@
-<!DOCTYPE html><html lang='pt-br'><head><meta charset='UTF-8'><title>Página</title></head><body><h2>Página em construção</h2></body></html>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Relatório de Vendas</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+    h2 { text-align: center; }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th { background: #007bff; color: white; }
+    .total {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 18px;
+      text-align: right;
+    }
+    #exportar {
+      margin-top: 20px;
+      background-color: #28a745;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #exportar:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Relatório de Vendas - Todos os Gerentes e Colaboradores</h2>
+
+    <button id="exportar" onclick="exportarPDF()">Exportar como PDF</button>
+
+    <table id="tabela">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Usuário</th>
+          <th>Descrição</th>
+          <th>Valor</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaVendas">
+        <tr><td colspan="4">Nenhuma venda registrada.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="total" id="totalVendas">Total: R$ 0.00</div>
+  </div>
+
+  <!-- Bibliotecas jsPDF e AutoTable -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+  <script>
+    const tabelaVendas = document.getElementById("tabelaVendas");
+    const totalVendas = document.getElementById("totalVendas");
+
+    function carregarVendas() {
+      const vendas = JSON.parse(localStorage.getItem("vendas") || "[]");
+      tabelaVendas.innerHTML = "";
+
+      if (vendas.length === 0) {
+        tabelaVendas.innerHTML = "<tr><td colspan='4'>Nenhuma venda registrada.</td></tr>";
+        return;
+      }
+
+      let total = 0;
+
+      vendas.forEach(v => {
+        total += v.valor;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${v.data}</td>
+          <td>${v.usuario}</td>
+          <td>${v.descricao || "Venda realizada"}</td>
+          <td>R$ ${v.valor.toFixed(2)}</td>
+        `;
+        tabelaVendas.appendChild(tr);
+      });
+
+      totalVendas.textContent = "Total: R$ " + total.toFixed(2);
+    }
+
+    async function exportarPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text("Relatório de Vendas", 14, 15);
+
+      const vendas = JSON.parse(localStorage.getItem("vendas") || "[]").map(v => [
+        v.data, v.usuario, v.descricao || "Venda realizada", "R$ " + v.valor.toFixed(2)
+      ]);
+
+      if (vendas.length === 0) {
+        alert("Nenhuma venda para exportar.");
+        return;
+      }
+
+      doc.autoTable({
+        head: [["Data", "Usuário", "Descrição", "Valor"]],
+        body: vendas,
+        startY: 20,
+      });
+
+      doc.save("relatorio_vendas.pdf");
+    }
+
+    window.onload = carregarVendas;
+  </script>
+
+</body>
+</html>
