@@ -10,18 +10,21 @@
       background: #f0f0f0;
       padding: 20px;
     }
+
     .container {
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
       background: white;
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
+
     h2 {
       text-align: center;
       margin-bottom: 20px;
     }
+
     input, button {
       width: 100%;
       padding: 12px;
@@ -30,28 +33,44 @@
       border: 1px solid #ccc;
       border-radius: 8px;
     }
+
     button {
       background-color: #28a745;
       color: white;
       font-weight: bold;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #218838;
     }
-    table {
-      width: 100%;
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 15px;
       margin-top: 20px;
-      border-collapse: collapse;
     }
-    th, td {
+
+    .bilhete {
+      background: #f9f9f9;
       border: 1px solid #ccc;
-      padding: 8px;
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 1px 1px 5px rgba(0,0,0,0.1);
       text-align: center;
     }
-    th {
-      background-color: #007bff;
-      color: white;
+
+    .bilhete h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .bilhete p {
+      margin: 6px 0;
+      font-size: 14px;
+      color: #555;
     }
   </style>
 </head>
@@ -66,31 +85,19 @@
 
   <button onclick="gerarBilhetes()">Gerar Bilhetes</button>
 
-  <table>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Número 1</th>
-        <th>Número 2</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaBilhetes">
-      <tr><td colspan="4">Nenhum bilhete gerado.</td></tr>
-    </tbody>
-  </table>
+  <div id="listaBilhetes" class="grid"></div>
 </div>
 
 <script>
   function gerarNumero4Digitos() {
-    return Math.floor(1000 + Math.random() * 9000); // 1000 a 9999
+    return Math.floor(1000 + Math.random() * 9000); // de 1000 a 9999
   }
 
   function gerarBilhetes() {
     const nome = document.getElementById("nomeRifa").value.trim();
     const quantidade = parseInt(document.getElementById("quantidade").value);
     const valor = parseFloat(document.getElementById("valor").value).toFixed(2);
-    const tabela = document.getElementById("tabelaBilhetes");
+    const lista = document.getElementById("listaBilhetes");
 
     if (!nome || isNaN(quantidade) || quantidade <= 0 || isNaN(valor)) {
       alert("Preencha todos os campos corretamente.");
@@ -112,16 +119,17 @@
 
     localStorage.setItem("rifa_" + nome, JSON.stringify(bilhetes));
 
-    tabela.innerHTML = "";
+    lista.innerHTML = "";
     bilhetes.forEach(b => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${b.id}</td>
-        <td>${b.numero1}</td>
-        <td>${b.numero2}</td>
-        <td>${b.status}</td>
+      const div = document.createElement("div");
+      div.className = "bilhete";
+      div.innerHTML = `
+        <h3>Bilhete #${b.id}</h3>
+        <p>Nº 1: <strong>${b.numero1}</strong></p>
+        <p>Nº 2: <strong>${b.numero2}</strong></p>
+        <p>Status: ${b.status}</p>
       `;
-      tabela.appendChild(tr);
+      lista.appendChild(div);
     });
 
     alert(`Rifa "${nome}" salva com ${quantidade} bilhetes.`);
