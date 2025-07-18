@@ -4,80 +4,79 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Produtos por Vendedor</title>
-  <style>
+    <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 700px;
-      margin: auto;
-      background-color: #f5f5f5;
+      margin: 0; padding: 20px;
+      background-color: #f2f2f2;
     }
+
     nav {
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 10px;
       margin-bottom: 20px;
-      justify-content: center;
     }
-    nav button {
+
+    nav a button {
       padding: 10px 15px;
       border: none;
-      border-radius: 5px;
-      background-color: #e0e0e0;
-      cursor: pointer;
-    }
-    nav button:hover {
-      background-color: #d5d5d5;
-    }
-    nav .ativo {
+      border-radius: 6px;
       background-color: #4caf50;
       color: white;
+      font-size: 16px;
+      cursor: pointer;
     }
+
+    nav a button:hover {
+      background-color: #45a049;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
     h2, h3 {
       text-align: center;
     }
-    input, select, button {
-      padding: 10px;
-      margin: 5px 0;
-      width: 100%;
-      border-radius: 4px;
-      border: 1px solid #ccc;
+
+    .linha {
+      display: flex;
+      justify-content: space-between;
+      margin: 12px 0;
+      font-size: 18px;
     }
-    .registro {
-      background: #fff;
-      border-left: 5px solid #4caf50;
-      padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 4px;
-      position: relative;
+
+    hr {
+      margin: 25px 0;
     }
-    .registro button {
-      margin-top: 5px;
-      margin-right: 5px;
-    }
-    .vazio {
-      text-align: center;
-      color: #999;
-    }
-    #caixaResumo {
-      background: #dff0d8;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #c3e6cb;
-      border-radius: 5px;
+
+    @media (max-width: 500px) {
+      .linha {
+        flex-direction: column;
+        font-size: 16px;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Menu de Navegação -->
   <nav>
-    <a href="home.html"><button>Home</button></a>
-    <a href="cadastro_vendedor.html"><button>Adicionar Vendedor</button></a>
-    <a href="vendedores.html"><button>Vendedores</button></a>
-    <a href="produtos_por_vendedor.html"><button class="ativo">Produtos</button></a>
+    <a href="home.html"><button>INICIO</button></a>
+    <a href="cadastro_vendedores.html"><button>ADICIONAR VENDEDORES</button></a>
+    <a href="vendedores.html"><button>LISTA DE VENDEDORRS</button></a>
+    <a href="produtos_por_vendedor.html"><button>VENDAS DIARIAS</button></a>
+    <a href="despesas.html"><button>DESPESAS</button></a>
+    <a href="caixa.html"><button>CAIXA</button></a>
+    <a href="relatório.html"><button>RELATORIO</button></a>
+  <a href="backup.html"><button>BACKUP</button></a>
   </nav>
-
   <!-- Caixa Total no topo -->
   <div id="caixaResumo">
     <strong>Caixa Total:</strong> R$ <span id="totalCaixa">0,00</span>
