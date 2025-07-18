@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Relatório de Vendas</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+      max-width: 900px;
+      margin: auto;
+    }
+    nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    nav a button {
+      padding: 10px;
+      border: none;
+      background-color: #e0e0e0;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    nav .ativo {
+      background-color: #4caf50;
+      color: white;
+    }
+    h2 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+    .filtros {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .resumo {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="home.html"><button>Home</button></a>
+    <a href="cadastro_vendedor.html"><button>Adicionar Vendedor</button></a>
+    <a href="vendedores.html"><button>Vendedores</button></a>
+    <a href="produtos_por_vendedor.html"><button>Produtos</button></a>
+    <a href="relatorio.html"><button class="ativo">Relatório</button></a>
+  </nav>
+
+  <h2>Relatório de Vendas</h2>
+
+  <div class="filtros">
+    <label>Data:
+      <input type="date" id="filtroData">
+    </label>
+    <label>Vendedor:
+      <select id="filtroVendedor"></select>
+    </label>
+    <button onclick="gerarRelatorio()">Atualizar</button>
+    <button onclick="exportarPDF()">Exportar PDF</button>
+  </div>
+
+  <table id="tabelaRelatorio">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Vendedor</th>
+        <th>Recebido</th>
+        <th>Vendidas</th>
+        <th>Estoque</th>
+        <th>Valor Unit.</th>
+        <th>Valor Apurado</th>
+        <th>Pago</th>
+        <th>Deve</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="resumo">
+    <h3>Resumo Geral</h3>
+    <p>Total Apurado: R$ <span id="totalApurado">0,00</span></p>
+    <p>Total Pago: R$ <span id="totalPago">0,00</span></p>
+    <p>Total Devido: R$ <span id="totalDevido">0,00</span></p>
+
+    <h3>Divisão de Lucros</h3>
+    <ul>
+      <li>Benedito (25%): R$ <span id="lucroBenedito">0,00</span></li>
+      <li>José Roberto (25%): R$ <span id="lucroJose">0,00</span></li>
+      <li>Pedro Carvalho (50%): R$ <span id="lucroPedro">0,00</span></li>
+    </ul>
+  </div>
+
+  <script>
+    function carregarVendedores() {
+      const vendedores = JSON.parse(localStorage.getItem("vendedores")) || [];
+      const select = document.getElementById("filtroVendedor");
+      select.innerHTML = '<option value="">Todos</option>';
+      vendedores.forEach((v, i) => {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = `${v.nome}`;
+        select.appendChild(opt);
+      });
+    }
+
+    function gerarRelatorio() {
+      const produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+      const vendedores = JSON.parse(localStorage.getItem("vendedores")) || [];
+      const tbody = document.querySelector("#tabelaRelatorio tbody");
+      const filtroData = document.getElementById("filtroData").value;
+      const filtroVendedor = document.getElementById("filtroVendedor").value;
+
+      tbody.innerHTML = "";
+      let totalApurado = 0, totalPago = 0, totalDevido = 0;
+
+      const filtrados = produtos.filter(p => {
+        return (!filtroData || p.data === filtroData) &&
+               (!filtroVendedor || p.vendedorIndex == filtroVendedor);
+      });
+
+      filtrados.forEach(p => {
+        const v = vendedores[p.vendedorIndex];
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${p.data}</td>
+          <td>${v.nome}</td>
+          <td>${p.recebido}</td>
+          <td>${p.vendidas}</td>
+          <td>${p.estoque}</td>
+          <td>R$ ${p.valorUnit.toFixed(2).replace(".", ",")}</td>
+          <td>R$ ${p.valorApurado.toFixed(2).replace(".", ",")}</td>
+          <td>R$ ${p.valorPago.toFixed(2).replace(".", ",")}</td>
+          <td>R$ ${p.deve.toFixed(2).replace(".", ",")}</td>
+        `;
+        tbody.appendChild(tr);
+
+        totalApurado += p.valorApurado;
+        totalPago += p.valorPago;
+        totalDevido += p.deve;
+      });
+
+      document.getElementById("totalApurado").textContent = totalApurado.toFixed(2).replace(".", ",");
+      document.getElementById("totalPago").textContent = totalPago.toFixed(2).replace(".", ",");
+      document.getElementById("totalDevido").textContent = totalDevido.toFixed(2).replace(".", ",");
+
+      calcularLucros(totalApurado);
+    }
+
+    function calcularLucros(total) {
+      document.getElementById("lucroBenedito").textContent = (total * 0.25).toFixed(2).replace(".", ",");
+      document.getElementById("lucroJose").textContent = (total * 0.25).toFixed(2).replace(".", ",");
+      document.getElementById("lucroPedro").textContent = (total * 0.50).toFixed(2).replace(".", ",");
+    }
+
+    function exportarPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text("Relatório de Vendas", 14, 15);
+      doc.autoTable({ html: '#tabelaRelatorio', startY: 20 });
+      doc.save("relatorio_vendas.pdf");
+    }
+
+    window.onload = () => {
+      carregarVendedores();
+      gerarRelatorio();
+    }
+  </script>
+
+</body>
+</html>

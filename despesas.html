@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro de Despesas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      background-color: #f9f9f9;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+
+    nav button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      background-color: #e0e0e0;
+      cursor: pointer;
+    }
+
+    nav button:hover {
+      background-color: #d5d5d5;
+    }
+
+    nav .ativo {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    input, button {
+      padding: 10px;
+      margin: 8px 0;
+      width: 100%;
+    }
+
+    .item {
+      background-color: #fff;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="home.html"><button>Home</button></a>
+    <a href="cadastro_vendedor.html"><button>Adicionar Vendedor</button></a>
+    <a href="vendedores.html"><button>Vendedores</button></a>
+    <a href="produtos_por_vendedor.html"><button>Produtos</button></a>
+    <a href="caixa.html"><button>Caixa</button></a>
+    <a href="despesas.html"><button class="ativo">Despesas</button></a>
+  </nav>
+
+  <h2>Cadastrar Despesa</h2>
+
+  <input type="text" id="descricao" placeholder="Descrição da despesa">
+  <input type="number" id="valor" placeholder="Valor da despesa (ex: 120.50)" step="0.01">
+  <button onclick="cadastrarDespesa()">Salvar Despesa</button>
+
+  <h3>Despesas Cadastradas</h3>
+  <div id="listaDespesas"></div>
+
+  <script>
+    function cadastrarDespesa() {
+      const descricao = document.getElementById('descricao').value.trim();
+      const valor = parseFloat(document.getElementById('valor').value);
+
+      if (!descricao || isNaN(valor)) {
+        return alert("Preencha todos os campos corretamente!");
+      }
+
+      const despesas = JSON.parse(localStorage.getItem('despesas')) || [];
+      despesas.push({ descricao, valor, data: new Date().toLocaleDateString() });
+      localStorage.setItem('despesas', JSON.stringify(despesas));
+
+      document.getElementById('descricao').value = '';
+      document.getElementById('valor').value = '';
+      listarDespesas();
+    }
+
+    function listarDespesas() {
+      const despesas = JSON.parse(localStorage.getItem('despesas')) || [];
+      const container = document.getElementById('listaDespesas');
+      container.innerHTML = '';
+
+      despesas.forEach((d, index) => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<strong>${d.descricao}</strong><br>
+                         Valor: R$ ${d.valor.toFixed(2).replace('.', ',')}<br>
+                         Data: ${d.data}
+                         <br><button onclick="removerDespesa(${index})">Excluir</button>`;
+        container.appendChild(div);
+      });
+    }
+
+    function removerDespesa(index) {
+      const despesas = JSON.parse(localStorage.getItem('despesas')) || [];
+      despesas.splice(index, 1);
+      localStorage.setItem('despesas', JSON.stringify(despesas));
+      listarDespesas();
+    }
+
+    window.onload = listarDespesas;
+  </script>
+
+</body>
+</html>

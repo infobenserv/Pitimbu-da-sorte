@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Backup</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+      text-align: center;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    input[type="file"] {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Backup do Sistema</h2>
+
+  <button onclick="exportarBackup()">Exportar Backup</button>
+  <br>
+
+  <input type="file" id="fileInput" accept=".json" onchange="importarBackup(event)" />
+  <br>
+  <button onclick="document.getElementById('fileInput').click()">Importar Backup</button>
+
+  <script>
+    function exportarBackup() {
+      const dados = {
+        vendedores: localStorage.getItem("vendedores"),
+        produtos: localStorage.getItem("produtos"),
+        despesas: localStorage.getItem("despesas"),
+        receitas: localStorage.getItem("receitas"),
+        caixaZeradoEm: localStorage.getItem("caixaZeradoEm")
+      };
+      const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "backup_sistema.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importarBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const dados = JSON.parse(e.target.result);
+          if (dados.vendedores) localStorage.setItem("vendedores", dados.vendedores);
+          if (dados.produtos) localStorage.setItem("produtos", dados.produtos);
+          if (dados.despesas) localStorage.setItem("despesas", dados.despesas);
+          if (dados.receitas) localStorage.setItem("receitas", dados.receitas);
+          if (dados.caixaZeradoEm) localStorage.setItem("caixaZeradoEm", dados.caixaZeradoEm);
+          alert("Backup importado com sucesso!");
+        } catch (error) {
+          alert("Erro ao importar backup.");
+        }
+      };
+      reader.readAsText(file);
+    }
+  </script>
+
+</body>
+</html>

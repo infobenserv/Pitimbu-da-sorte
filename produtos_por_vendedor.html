@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Produtos por Vendedor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+      background-color: #f5f5f5;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+    nav button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      background-color: #e0e0e0;
+      cursor: pointer;
+    }
+    nav button:hover {
+      background-color: #d5d5d5;
+    }
+    nav .ativo {
+      background-color: #4caf50;
+      color: white;
+    }
+    h2, h3 {
+      text-align: center;
+    }
+    input, select, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    .registro {
+      background: #fff;
+      border-left: 5px solid #4caf50;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      position: relative;
+    }
+    .registro button {
+      margin-top: 5px;
+      margin-right: 5px;
+    }
+    .vazio {
+      text-align: center;
+      color: #999;
+    }
+    #caixaResumo {
+      background: #dff0d8;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #c3e6cb;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Menu de Navegação -->
+  <nav>
+    <a href="home.html"><button>Home</button></a>
+    <a href="cadastro_vendedor.html"><button>Adicionar Vendedor</button></a>
+    <a href="vendedores.html"><button>Vendedores</button></a>
+    <a href="produtos_por_vendedor.html"><button class="ativo">Produtos</button></a>
+  </nav>
+
+  <!-- Caixa Total no topo -->
+  <div id="caixaResumo">
+    <strong>Caixa Total:</strong> R$ <span id="totalCaixa">0,00</span>
+  </div>
+
+  <h2>Cadastro de Produtos por Vendedor</h2>
+
+  <select id="vendedorSelect"></select>
+  <input type="number" id="recebido" placeholder="Recebeu (Qtd de mercadoria)">
+  <input type="number" id="vendidas" placeholder="Vendidas">
+  <input type="text" id="valorUnitario" placeholder="Valor Unitário (ex: 12,50)">
+  <input type="number" id="valorPago" placeholder="Valor Pago (inicial)">
+  <button onclick="cadastrarProduto()">Salvar Produto</button>
+
+  <h3>Filtrar por Vendedor</h3>
+  <select id="filtroVendedor" onchange="listarProdutos()"></select>
+
+  <h3>Lista de Produtos</h3>
+  <div id="listaProdutos"></div>
+
+<script>
+  // Função para carregar os vendedores na página
+  function carregarVendedores() {
+    const vendedores = JSON.parse(localStorage.getItem("vendedores")) || [];
+    const selectCadastro = document.getElementById("vendedorSelect");
+    const filtro = document.getElementById("filtroVendedor");
+
+    selectCadastro.innerHTML = '<option value="">Selecione um vendedor</option>';
+    filtro.innerHTML = '<option value="">Todos os vendedores</option>';
+
+    vendedores.forEach((v, i) => {
+      const opt1 = document.createElement("option");
+      const opt2 = document.createElement("option");
+      opt1.value = i;
+      opt2.value = i;
+      opt1.textContent = `${v.nome} - ${v.localidade}`;
+      opt2.textContent = `${v.nome}`;
+      selectCadastro.appendChild(opt1);
+      filtro.appendChild(opt2);
+    });
+  }
+
+  // Função para cadastrar produto
+  function cadastrarProduto() {
+    const vendedorIndex = document.getElementById("vendedorSelect").value;
+    const recebido = parseInt(document.getElementById("recebido").value);
+    const vendidas = parseInt(document.getElementById("vendidas").value);
+    const valorUnit = parseFloat(document.getElementById("valorUnitario").value.replace(",", "."));
+    const valorPago = parseFloat(document.getElementById("valorPago").value);
+
+    if (vendedorIndex === "" || isNaN(recebido) || isNaN(vendidas) || isNaN(valorUnit) || isNaN(valorPago)) {
+      return alert("Preencha todos os campos corretamente!");
+    }
+
+    const estoque = recebido - vendidas;
+    const valorApurado = vendidas * valorUnit;
+    const deve = valorApurado - valorPago;
+
+    const produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+    produtos.push({
+      vendedorIndex,
+      recebido,
+      estoque,
+      vendidas,
+      valorUnit,
+      valorApurado,
+      valorPago,
+      deve,
+      data: new Date().toISOString().split("T")[0]
+    });
+
+    localStorage.setItem("produtos", JSON.stringify(produtos));
+    document.getElementById("recebido").value = "";
+    document.getElementById("vendidas").value = "";
+    document.getElementById("valorUnitario").value = "";
+    document.getElementById("valorPago").value = "";
+    listarProdutos();
+    atualizarCaixaTotal();
+  }
+
+  // Função para listar produtos
+  function listarProdutos() {
+    const produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+    const vendedores = JSON.parse(localStorage.getItem("vendedores")) || [];
+    const lista = document.getElementById("listaProdutos");
+    const filtroIndex = document.getElementById("filtroVendedor").value;
+    lista.innerHTML = "";
+
+    const filtrados = filtroIndex === "" ? produtos : produtos.filter(p => p.vendedorIndex == filtroIndex);
+
+    if (filtrados.length === 0) {
+      lista.innerHTML = '<p class="vazio">Nenhum produto encontrado.</p>';
+      return;
+    }
+
+    filtrados.forEach((p, index) => {
+      const vendedor = vendedores[p.vendedorIndex];
+      const div = document.createElement("div");
+      div.className = "registro";
+      div.innerHTML = `
+        <strong>Vendedor:</strong> ${vendedor.nome} (${vendedor.localidade})<br>
+        Recebeu: ${p.recebido} | Vendidas: ${p.vendidas} | Estoque: ${p.estoque}<br>
+        Valor Unitário: R$ ${p.valorUnit.toFixed(2).replace(".", ",")}<br>
+        Valor Apurado: R$ ${p.valorApurado.toFixed(2).replace(".", ",")}<br>
+        Valor Pago: R$ ${p.valorPago.toFixed(2).replace(".", ",")}<br>
+        Deve: R$ ${p.deve.toFixed(2).replace(".", ",")}<br>
+        Data: ${p.data}<br>
+        <button onclick="editarVendidas(${index})">Editar Vendidas</button>
+        <button onclick="adicionarPagamento(${index})">Adicionar Pagamento</button>
+        <button onclick="excluirProduto(${index})">Excluir Produto</button>
+      `;
+      lista.appendChild(div);
+    });
+  }
+
+  // Função para editar quantidade vendida
+  function editarVendidas(index) {
+    const produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+    const novaQtd = prompt("Nova quantidade vendida:", produtos[index].vendidas);
+    const nova = parseInt(novaQtd);
+    if (!isNaN(nova)) {
+      produtos[index].vendidas = nova;
+      produtos[index].estoque = produtos[index].recebido - nova;
+      produtos[index].valorApurado = nova * produtos[index].valorUnit;
+      produtos[index].deve = produtos[index].valorApurado - produtos[index].valorPago;
+      localStorage.setItem("produtos", JSON.stringify(produtos));
+      listarProdutos();
+      atualizarCaixaTotal();
+    }
+  }
+
+  // Função para adicionar pagamento
+  function adicionarPagamento(index) {
+    const produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+    const valor = prompt("Adicionar pagamento (R$):", "0");
+    const adicional = parseFloat(valor.replace(",", "."));
+    if (!isNaN(adicional)) {
+      produtos[index].valorPago += adicional;
+      produtos[index].deve = produtos[index].valorApurado - produtos[index].valorPago;
+      localStorage.setItem("produtos", JSON.stringify(produtos));
+      listarProdutos();
+      atualizarCaixaTotal();
+    }
+  }
+
+  // Função para excluir produto
+  function excluirProduto(index) {
+    if (confirm("Deseja excluir este produto?")) {
+      const produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+      produtos.splice(index, 1);
+      localStorage.setItem("produtos", JSON.stringify(produtos));
+      listarProdutos();
+      atualizarCaixaTotal();
+    }
+  }
+
+  // Função para atualizar o total do Caixa
+  function atualizarCaixaTotal() {
+    const produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+    const total = produtos.reduce((soma, p) => soma + (parseFloat(p.valorApurado) || 0), 0);
+    document.getElementById("totalCaixa").textContent = total.toFixed(2).replace(".", ",");
+  }
+
+  window.onload = () => {
+    carregarVendedores();
+    listarProdutos();
+    atualizarCaixaTotal(); // Atualiza o Caixa Total quando a página for carregada
+  }
+</script>
+
+</body>
+</html>

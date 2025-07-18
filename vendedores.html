@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lista de Vendedores</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      background-color: #f5f5f5;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+    nav button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      background-color: #e0e0e0;
+      cursor: pointer;
+    }
+    nav button:hover {
+      background-color: #d5d5d5;
+    }
+    nav .ativo {
+      background-color: #4caf50;
+      color: white;
+    }
+    .vendedor {
+      background: #fff;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 5px;
+      border-left: 5px solid #4caf50;
+      position: relative;
+    }
+    .vendedor button {
+      float: right;
+      background-color: red;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="home.html"><button>Home</button></a>
+    <a href="cadastro_vendedor.html"><button>Adicionar Vendedor</button></a>
+    <a href="vendedores.html"><button class="ativo">Vendedores</button></a>
+    <a href="produtos_por_vendedor.html"><button>Produtos</button></a>
+  </nav>
+
+  <h2>Vendedores Cadastrados</h2>
+
+  <div id="lista"></div>
+
+  <script>
+    function carregar() {
+      const vendedores = JSON.parse(localStorage.getItem("vendedores")) || [];
+      const lista = document.getElementById("lista");
+      lista.innerHTML = "";
+
+      vendedores.forEach((v, i) => {
+        const div = document.createElement("div");
+        div.className = "vendedor";
+        div.innerHTML = `
+          ${v.nome} - ${v.localidade}
+          <button onclick="excluir(${i})">Excluir</button>
+        `;
+        lista.appendChild(div);
+      });
+    }
+
+    function excluir(index) {
+      const vendedores = JSON.parse(localStorage.getItem("vendedores")) || [];
+      if (confirm("Deseja excluir este vendedor?")) {
+        vendedores.splice(index, 1);
+        localStorage.setItem("vendedores", JSON.stringify(vendedores));
+        carregar();
+      }
+    }
+
+    window.onload = carregar;
+  </script>
+
+</body>
+</html>
